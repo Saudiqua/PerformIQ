@@ -1,0 +1,192 @@
+# Replit Agent Prompt: PerformIQ MVP
+
+Build a full-stack AI-powered performance management MVP web application with the following specifications:
+
+## Core Functionality
+
+**Application Name:** PerformIQ MVP
+
+**Tech Stack:**
+- Frontend: React with Tailwind CSS
+- Backend: Node.js/Express
+- Database: SQLite (for MVP simplicity)
+- AI: OpenAI API for sentiment analysis and insights generation
+- Authentication: Simple JWT-based auth (no OAuth integrations for MVP)
+
+## Features to Build
+
+### 1. Authentication System
+- Simple login/signup with email and password
+- Three user roles: Employee, Manager, Admin
+- JWT token-based authentication
+- Demo accounts pre-seeded:
+  - employee@demo.com (Employee role)
+  - manager@demo.com (Manager role)
+  - admin@demo.com (Admin role)
+  - Password for all: "demo123"
+
+### 2. Data Simulation Layer (Instead of Real Integrations)
+Create a data generator that simulates communication data:
+- Generate mock "email" and "slack message" data for the past 3 months
+- Include fields: sender, recipient, timestamp, subject, message content, sentiment
+- Simulate realistic patterns: response times, collaboration networks, volume trends
+- Create 20 mock employees across 3 teams with varying performance patterns
+- Include some employees with "warning signals" (declining engagement, negative sentiment spikes)
+
+### 3. Employee Self-Improvement Dashboard
+**Route:** `/employee/dashboard`
+
+Display:
+- **Overview Card:** Personal performance score (0-100) with trend indicator
+- **Communication Stats:**
+  - Average response time vs team average
+  - Messages sent/received this week vs last week
+  - Sentiment breakdown (positive/neutral/negative %)
+  - Most active collaboration partners (top 5)
+- **Performance Metrics Visualization:**
+  - Initiative Score (chart showing 3-month trend)
+  - Collaboration Index (network graph or simple bar)
+  - Responsiveness Rating (gauge chart)
+  - Communication Clarity Score
+- **AI Insights Section:**
+  - "Your Strengths" - 3 bullet points with specific examples
+  - "Areas for Growth" - 2-3 actionable suggestions
+  - "This Week's Highlight" - One positive pattern identified
+- **Weekly Trend Chart:** Line chart showing key metrics over 12 weeks
+
+### 4. Manager Performance Dashboard
+**Route:** `/manager/dashboard`
+
+Display:
+- **Team Health Overview:**
+  - Overall team score with red/yellow/green indicator
+  - Number of team members in each performance category
+  - Alert count (requires attention)
+- **Team Member Cards Grid:**
+  - Card for each team member showing:
+    - Name, photo, current performance score
+    - Trend indicator (up/down/stable)
+    - Alert badge if flagged
+    - Quick stats: response time, sentiment, activity level
+  - Click card to see individual deep dive
+- **Alerts Panel:**
+  - List of flagged issues with severity and description:
+    - "John's communication dropped 40% this week"
+    - "Sarah showing burnout signals (late night activity)"
+    - "Mike consistently in bottom 20% for responsiveness"
+- **Team Analytics:**
+  - Collaboration network visualization (simple node graph)
+  - Team sentiment trend over time
+  - Workload distribution chart
+
+### 5. Individual Deep Dive Page
+**Route:** `/manager/employee/:id`
+
+Show detailed employee analysis:
+- Full performance profile with all metrics
+- 3-month trend charts for each metric
+- Recent communication examples (anonymized content snippets)
+- AI-generated performance summary (200-300 words)
+- Suggested talking points for 1:1 meeting
+- Action recommendations (recognize, support, develop)
+
+### 6. AI Analysis Engine (Backend)
+Create API endpoints that use OpenAI to:
+- Analyze sentiment of message content
+- Generate insight summaries from communication patterns
+- Create personalized strength/weakness descriptions
+- Flag anomalies and performance concerns
+- Generate natural language performance summaries
+
+**Key Endpoints:**
+- `POST /api/analyze/sentiment` - Analyze message sentiment
+- `GET /api/insights/employee/:id` - Get AI insights for employee
+- `GET /api/insights/team/:teamId` - Get team-level insights
+- `GET /api/alerts/manager/:managerId` - Get alerts for manager's team
+
+### 7. Simple Admin Panel
+**Route:** `/admin/settings`
+
+- View all users and their roles
+- Configure alert thresholds (slider controls)
+- View system-wide analytics
+- Data retention settings (mock UI)
+
+## UI/UX Requirements
+
+- **Design System:** Modern, clean interface with Tailwind CSS
+- **Color Scheme:** Professional blues and greens with red/yellow/green for alerts
+- **Charts:** Use Recharts or Chart.js for data visualizations
+- **Responsive:** Mobile-friendly layout
+- **Navigation:** Sidebar with role-based menu items
+- **Loading States:** Show skeleton loaders while fetching data
+- **Empty States:** Handle cases with no data gracefully
+
+## Data Model (SQLite Schema)
+
+```sql
+-- Users table
+users: id, email, password_hash, role, name, team_id, manager_id, avatar_url
+
+-- Teams table
+teams: id, name, department
+
+-- Communications table
+communications: id, sender_id, recipient_id, platform (email/slack), 
+                 timestamp, subject, content, sentiment_score
+
+-- Metrics table
+metrics: id, user_id, date, initiative_score, collaboration_index, 
+         responsiveness_rating, clarity_score
+
+-- Alerts table
+alerts: id, user_id, manager_id, type, severity, message, created_at, resolved
+```
+
+## Sample Data Requirements
+
+Generate realistic mock data including:
+- 20 employees across 3 teams
+- 3 managers (each managing 6-7 people)
+- 1000+ communication records over 3 months
+- Performance patterns that tell stories:
+  - 2-3 "high performers" with consistently good metrics
+  - 2-3 "struggling employees" with declining trends
+  - 1 employee with recent performance drop (alert trigger)
+  - 1 employee showing burnout signals
+  - Rest are "average performers" with normal variation
+
+## Environment Variables Needed
+```
+OPENAI_API_KEY=your_key_here
+JWT_SECRET=your_secret_here
+DATABASE_URL=./database.sqlite
+PORT=3000
+```
+
+## Key User Flows to Test
+
+1. **Employee Flow:** Login → View dashboard → See AI insights → Check trends
+2. **Manager Flow:** Login → See team health → Click alert → View employee details → Get AI recommendations
+3. **Comparison Flow:** Employee sees their metrics vs team averages
+
+## Additional Instructions
+
+- Use proper error handling and validation
+- Add loading spinners for AI API calls
+- Include sample data seeding script that runs on first launch
+- Make the AI insights feel authentic (not generic)
+- Add helpful tooltips explaining what each metric means
+- Include a "Demo Mode" banner indicating this is simulated data
+- Make charts interactive (hover states, tooltips)
+- Keep code modular and well-commented
+
+## Nice-to-Have (If Time Permits)
+
+- Export report to PDF functionality
+- Dark mode toggle
+- Notification system for new alerts
+- Search/filter functionality on manager dashboard
+- Date range selector for analytics
+
+Build this as a production-ready MVP that demonstrates the core value proposition while acknowledging it uses simulated data instead of real integrations. Focus on making the insights feel valuable and the UI polished.
