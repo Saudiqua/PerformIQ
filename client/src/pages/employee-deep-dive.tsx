@@ -6,18 +6,46 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, Target, Users, Zap, ThumbsUp, Lightbulb, TrendingUp } from "lucide-react";
+import { ArrowLeft, Target, Users, Zap, ThumbsUp, Lightbulb, TrendingUp, Download } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, RadialBarChart, RadialBar } from "recharts";
 import { Link } from "wouter";
+import { exportElementToPDF } from "@/lib/pdf-export";
+import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 export default function EmployeeDeepDive() {
   const [, params] = useRoute("/manager/employee/:id");
   const employeeId = params?.id;
+  const [isExporting, setIsExporting] = useState(false);
+  const { toast } = useToast();
 
   const { data, isLoading } = useQuery<EmployeeDeepDiveData>({
     queryKey: ["/api/manager/employee", employeeId],
     enabled: !!employeeId,
   });
+
+  const handleExportPDF = async () => {
+    try {
+      setIsExporting(true);
+      await exportElementToPDF(
+        "employee-detail-content",
+        `employee-analysis-${data?.employee.name.replace(/\s+/g, '-')}-${new Date().toISOString().split('T')[0]}.pdf`,
+        "Employee Performance Analysis"
+      );
+      toast({
+        title: "Export successful",
+        description: "Employee analysis has been downloaded",
+      });
+    } catch (error) {
+      toast({
+        title: "Export failed",
+        description: "There was an error exporting the analysis",
+        variant: "destructive",
+      });
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -63,18 +91,30 @@ export default function EmployeeDeepDive() {
 
   return (
     <div className="p-8 space-y-8 max-w-7xl">
-      <div className="flex items-center gap-4">
-        <Link href="/manager/dashboard">
-          <Button variant="ghost" size="icon" data-testid="button-back">
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-        </Link>
-        <div>
-          <h1 className="text-3xl font-semibold">Employee Performance Analysis</h1>
-          <p className="text-muted-foreground">Detailed insights and recommendations</p>
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <Link href="/manager/dashboard">
+            <Button variant="ghost" size="icon" data-testid="button-back">
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+          </Link>
+          <div>
+            <h1 className="text-3xl font-semibold">Employee Performance Analysis</h1>
+            <p className="text-muted-foreground">Detailed insights and recommendations</p>
+          </div>
         </div>
+        <Button
+          onClick={handleExportPDF}
+          disabled={isExporting}
+          variant="outline"
+          data-testid="button-export-pdf"
+        >
+          <Download className="w-4 h-4 mr-2" />
+          {isExporting ? "Exporting..." : "Export PDF"}
+        </Button>
       </div>
 
+      <div id="employee-detail-content" className="space-y-8">
       <Card data-testid="card-employee-header">
         <CardContent className="pt-6">
           <div className="flex items-center gap-6">
@@ -339,6 +379,7 @@ export default function EmployeeDeepDive() {
           </ul>
         </CardContent>
       </Card>
+      </div>
     </div>
   );
 }

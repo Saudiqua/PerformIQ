@@ -5,14 +5,43 @@ import { MetricCard } from "@/components/metric-card";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Activity, Users, Clock, MessageSquare, TrendingUp, Target, Zap, MessageCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Activity, Users, Clock, MessageSquare, TrendingUp, Target, Zap, MessageCircle, Download } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import { Skeleton } from "@/components/ui/skeleton";
+import { exportElementToPDF } from "@/lib/pdf-export";
+import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 export default function EmployeeDashboard() {
   const { data, isLoading } = useQuery<EmployeeDashboardData>({
     queryKey: ["/api/employee/dashboard"],
   });
+  const [isExporting, setIsExporting] = useState(false);
+  const { toast } = useToast();
+
+  const handleExportPDF = async () => {
+    try {
+      setIsExporting(true);
+      await exportElementToPDF(
+        "employee-dashboard-content",
+        `performance-report-${new Date().toISOString().split('T')[0]}.pdf`,
+        "Employee Performance Report"
+      );
+      toast({
+        title: "Export successful",
+        description: "Your performance report has been downloaded",
+      });
+    } catch (error) {
+      toast({
+        title: "Export failed",
+        description: "There was an error exporting your report",
+        variant: "destructive",
+      });
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -47,10 +76,23 @@ export default function EmployeeDashboard() {
 
   return (
     <div className="p-8 space-y-8 max-w-7xl">
-      <div>
-        <h1 className="text-3xl font-semibold mb-2">Welcome, {data.user.name}</h1>
-        <p className="text-muted-foreground">Here's your performance overview and insights</p>
+      <div className="flex items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-semibold mb-2">Welcome, {data.user.name}</h1>
+          <p className="text-muted-foreground">Here's your performance overview and insights</p>
+        </div>
+        <Button
+          onClick={handleExportPDF}
+          disabled={isExporting}
+          variant="outline"
+          data-testid="button-export-pdf"
+        >
+          <Download className="w-4 h-4 mr-2" />
+          {isExporting ? "Exporting..." : "Export PDF"}
+        </Button>
       </div>
+
+      <div id="employee-dashboard-content" className="space-y-8">
 
       <PerformanceScoreCard 
         score={data.performanceScore} 
@@ -298,6 +340,7 @@ export default function EmployeeDashboard() {
           <p className="text-base leading-relaxed" data-testid="text-weekly-highlight">{data.aiInsights.weeklyHighlight}</p>
         </CardContent>
       </Card>
+      </div>
     </div>
   );
 }

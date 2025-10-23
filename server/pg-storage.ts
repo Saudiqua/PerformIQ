@@ -1,17 +1,11 @@
 import { eq, and, or, desc } from "drizzle-orm";
 import { db } from "./db";
-import {
-  users, teams, communications, metrics, alerts, thresholds,
-  type SelectUser, type InsertUser,
-  type SelectTeam, type InsertTeam,
-  type SelectCommunication, type InsertCommunication,
-  type SelectMetric, type InsertMetric,
-  type SelectAlert, type InsertAlert,
-} from "@shared/db-schema";
+import { users, teams, communications, metrics, alerts, thresholds } from "@shared/schema";
+import type { User, Team, Communication, Metric, Alert, InsertUser, InsertTeam, InsertCommunication, InsertMetric, InsertAlert } from "@shared/schema";
 import { IStorage } from "./storage";
 
 // Type adapters to convert between DB schema and API schema
-function toUser(dbUser: SelectUser): any {
+function toUser(dbUser: any): User {
   return {
     id: dbUser.id,
     email: dbUser.email,
@@ -24,11 +18,11 @@ function toUser(dbUser: SelectUser): any {
   };
 }
 
-function toTeam(dbTeam: SelectTeam): any {
+function toTeam(dbTeam: any): Team {
   return dbTeam;
 }
 
-function toCommunication(dbComm: SelectCommunication): any {
+function toCommunication(dbComm: any): Communication {
   return {
     id: dbComm.id,
     senderId: dbComm.senderId,
@@ -41,7 +35,7 @@ function toCommunication(dbComm: SelectCommunication): any {
   };
 }
 
-function toMetric(dbMetric: SelectMetric): any {
+function toMetric(dbMetric: any): Metric {
   return {
     id: dbMetric.id,
     userId: dbMetric.userId,
@@ -53,7 +47,7 @@ function toMetric(dbMetric: SelectMetric): any {
   };
 }
 
-function toAlert(dbAlert: SelectAlert): any {
+function toAlert(dbAlert: any): Alert {
   return {
     id: dbAlert.id,
     userId: dbAlert.userId,

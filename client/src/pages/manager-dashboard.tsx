@@ -5,14 +5,42 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { TrendingUp, TrendingDown, Minus, AlertCircle, Clock, Smile, Activity, Eye } from "lucide-react";
+import { TrendingUp, TrendingDown, Minus, AlertCircle, Clock, Smile, Activity, Eye, Download } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from "recharts";
 import { Link } from "wouter";
+import { exportElementToPDF } from "@/lib/pdf-export";
+import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 export default function ManagerDashboard() {
   const { data, isLoading } = useQuery<ManagerDashboardData>({
     queryKey: ["/api/manager/dashboard"],
   });
+  const [isExporting, setIsExporting] = useState(false);
+  const { toast } = useToast();
+
+  const handleExportPDF = async () => {
+    try {
+      setIsExporting(true);
+      await exportElementToPDF(
+        "manager-analytics-content",
+        `team-analytics-${new Date().toISOString().split('T')[0]}.pdf`,
+        "Team Analytics Report"
+      );
+      toast({
+        title: "Export successful",
+        description: "Team analytics has been downloaded",
+      });
+    } catch (error) {
+      toast({
+        title: "Export failed",
+        description: "There was an error exporting the analytics",
+        variant: "destructive",
+      });
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -60,11 +88,23 @@ export default function ManagerDashboard() {
   return (
     <div className="flex h-full">
       <div className="flex-1 p-8 space-y-8 overflow-auto">
-        <div>
-          <h1 className="text-3xl font-semibold mb-2">Team Dashboard</h1>
-          <p className="text-muted-foreground">Monitor your team's performance and health</p>
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-semibold mb-2">Team Dashboard</h1>
+            <p className="text-muted-foreground">Monitor your team's performance and health</p>
+          </div>
+          <Button
+            onClick={handleExportPDF}
+            disabled={isExporting}
+            variant="outline"
+            data-testid="button-export-pdf"
+          >
+            <Download className="w-4 h-4 mr-2" />
+            {isExporting ? "Exporting..." : "Export PDF"}
+          </Button>
         </div>
 
+        <div id="manager-analytics-content" className="space-y-8">
         <Card className={`border-2 ${getStatusColor(data.teamHealth.status)}`} data-testid="card-team-health">
           <CardHeader>
             <CardTitle>Team Health Overview</CardTitle>
@@ -238,6 +278,7 @@ export default function ManagerDashboard() {
               </div>
             </CardContent>
           </Card>
+        </div>
         </div>
       </div>
 

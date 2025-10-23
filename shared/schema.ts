@@ -1,5 +1,8 @@
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
+// Drizzle imports - these should be tree-shaken by Vite when bundling for frontend
+import { pgTable, varchar, timestamp, integer, boolean, text, decimal } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 
 // User roles
 export type UserRole = "employee" | "manager" | "admin";
@@ -262,3 +265,63 @@ export interface AuthResponse {
   token: string;
   user: User;
 }
+
+// ============================================================================
+// Drizzle table definitions - backend use only, should be tree-shaken by Vite
+// ============================================================================
+
+export const teams = pgTable("teams", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: varchar("name", { length: 255 }).notNull(),
+  department: varchar("department", { length: 255 }).notNull(),
+});
+
+export const users = pgTable("users", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  email: varchar("email", { length: 255 }).notNull().unique(),
+  password: varchar("password", { length: 255 }).notNull(),
+  role: varchar("role", { length: 50 }).notNull().$type<"employee" | "manager" | "admin">(),
+  name: varchar("name", { length: 255 }).notNull(),
+  teamId: varchar("team_id").notNull().references(() => teams.id),
+  managerId: varchar("manager_id").references(() => users.id),
+  avatarUrl: varchar("avatar_url", { length: 500 }).notNull(),
+});
+
+export const communications = pgTable("communications", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  senderId: varchar("sender_id").notNull().references(() => users.id),
+  recipientId: varchar("recipient_id").notNull().references(() => users.id),
+  platform: varchar("platform", { length: 50 }).notNull().$type<"email" | "slack">(),
+  timestamp: timestamp("timestamp").notNull(),
+  subject: varchar("subject", { length: 500 }).notNull(),
+  content: text("content").notNull(),
+  sentimentScore: decimal("sentiment_score", { precision: 3, scale: 2 }).notNull(),
+});
+
+export const metrics = pgTable("metrics", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  date: timestamp("date").notNull(),
+  initiativeScore: integer("initiative_score").notNull(),
+  collaborationIndex: integer("collaboration_index").notNull(),
+  responsivenessRating: integer("responsiveness_rating").notNull(),
+  clarityScore: integer("clarity_score").notNull(),
+});
+
+export const alerts = pgTable("alerts", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  managerId: varchar("manager_id").notNull().references(() => users.id),
+  type: varchar("type", { length: 100 }).notNull().$type<"performance_drop" | "burnout_signal" | "low_engagement" | "negative_sentiment">(),
+  severity: varchar("severity", { length: 50 }).notNull().$type<"low" | "medium" | "high">(),
+  message: text("message").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  resolved: boolean("resolved").notNull().default(false),
+});
+
+export const thresholds = pgTable("thresholds", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  performanceDropThreshold: integer("performance_drop_threshold").notNull().default(15),
+  burnoutThreshold: integer("burnout_threshold").notNull().default(70),
+  engagementThreshold: integer("engagement_threshold").notNull().default(40),
+});

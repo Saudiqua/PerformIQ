@@ -165,10 +165,10 @@ export async function seedData() {
         await storage.createMetric({
           userId: employee.id,
           date: date,
-          initiativeScore: Math.max(0, Math.min(100, initiativeScore)),
-          collaborationIndex: Math.max(0, Math.min(100, collaborationScore)),
-          responsivenessRating: Math.max(0, Math.min(100, responsivenessScore)),
-          clarityScore: Math.max(0, Math.min(100, clarityScore)),
+          initiativeScore: Math.round(Math.max(0, Math.min(100, initiativeScore))),
+          collaborationIndex: Math.round(Math.max(0, Math.min(100, collaborationScore))),
+          responsivenessRating: Math.round(Math.max(0, Math.min(100, responsivenessScore))),
+          clarityScore: Math.round(Math.max(0, Math.min(100, clarityScore))),
         });
       }
 
