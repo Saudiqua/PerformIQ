@@ -1,4 +1,4 @@
-import { storage } from "./storage";
+import { storage } from "./pg-storage";
 import bcrypt from "bcryptjs";
 
 const FIRST_NAMES = ["John", "Sarah", "Michael", "Emily", "David", "Jessica", "James", "Lisa", "Robert", "Maria", "William", "Jennifer", "Richard", "Linda", "Thomas", "Patricia", "Daniel", "Susan", "Matthew", "Karen"];
@@ -67,6 +67,13 @@ function generateAvatar(name: string): string {
 
 export async function seedData() {
   console.log("Seeding data...");
+
+  // Check if data already exists
+  const existingUsers = await storage.getAllUsers();
+  if (existingUsers.length > 0) {
+    console.log("Data already seeded. Skipping...");
+    return;
+  }
 
   const hashedPassword = await bcrypt.hash("demo123", 10);
 
