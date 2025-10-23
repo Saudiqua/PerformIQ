@@ -34,6 +34,10 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     if (user) {
       try {
         await apiRequest("PATCH", "/api/user/theme", { theme: newTheme });
+        
+        // Update localStorage to persist theme across reloads
+        const updatedUser = { ...user, theme: newTheme };
+        localStorage.setItem('auth_user', JSON.stringify(updatedUser));
       } catch (error) {
         console.error("Failed to update theme preference:", error);
       }
