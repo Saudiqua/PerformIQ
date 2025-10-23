@@ -17,6 +17,7 @@ export interface User {
   teamId: string;
   managerId: string | null;
   avatarUrl: string;
+  theme: "light" | "dark";
 }
 
 export const insertUserSchema = z.object({
@@ -27,6 +28,7 @@ export const insertUserSchema = z.object({
   teamId: z.string(),
   managerId: z.string().nullable(),
   avatarUrl: z.string(),
+  theme: z.enum(["light", "dark"]).default("light"),
 });
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -285,6 +287,7 @@ export const users = pgTable("users", {
   teamId: varchar("team_id").notNull().references(() => teams.id),
   managerId: varchar("manager_id").references(() => users.id),
   avatarUrl: varchar("avatar_url", { length: 500 }).notNull(),
+  theme: varchar("theme", { length: 10 }).notNull().default("light").$type<"light" | "dark">(),
 });
 
 export const communications = pgTable("communications", {

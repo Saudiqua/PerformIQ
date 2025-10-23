@@ -6,7 +6,10 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import { AuthProvider, useAuth } from "@/lib/auth";
+import { ThemeProvider } from "@/lib/theme";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { ProtectedRoute } from "@/components/protected-route";
+import { useWebSocket } from "@/lib/useWebSocket";
 import Login from "@/pages/login";
 import Signup from "@/pages/signup";
 import EmployeeDashboard from "@/pages/employee-dashboard";
@@ -15,6 +18,11 @@ import EmployeeDeepDive from "@/pages/employee-deep-dive";
 import AdminDashboard from "@/pages/admin-dashboard";
 import NotFound from "@/pages/not-found";
 
+function WebSocketProvider() {
+  useWebSocket();
+  return null;
+}
+
 function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
@@ -22,10 +30,13 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
       <div className="flex flex-col flex-1 overflow-hidden">
         <header className="flex items-center justify-between px-6 py-4 border-b bg-background">
           <SidebarTrigger data-testid="button-sidebar-toggle" />
-          <div className="flex items-center gap-2 px-4 py-2 bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 rounded-md text-sm">
-            <span className="font-medium">Demo Mode</span>
-            <span>-</span>
-            <span>Simulated Data</span>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 px-4 py-2 bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 rounded-md text-sm">
+              <span className="font-medium">Demo Mode</span>
+              <span>-</span>
+              <span>Simulated Data</span>
+            </div>
+            <ThemeToggle />
           </div>
         </header>
         <main className="flex-1 overflow-auto bg-background">
@@ -116,12 +127,15 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <AuthProvider>
-          <SidebarProvider style={sidebarStyle}>
-            <div className="flex h-screen w-full">
-              <Toaster />
-              <Router />
-            </div>
-          </SidebarProvider>
+          <ThemeProvider>
+            <WebSocketProvider />
+            <SidebarProvider style={sidebarStyle}>
+              <div className="flex h-screen w-full">
+                <Toaster />
+                <Router />
+              </div>
+            </SidebarProvider>
+          </ThemeProvider>
         </AuthProvider>
       </TooltipProvider>
     </QueryClientProvider>

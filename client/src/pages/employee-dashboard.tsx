@@ -10,8 +10,10 @@ import { Activity, Users, Clock, MessageSquare, TrendingUp, Target, Zap, Message
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import { Skeleton } from "@/components/ui/skeleton";
 import { exportElementToPDF } from "@/lib/pdf-export";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { DateRangePicker, DateRange } from "@/components/date-range-picker";
+import { parseISO, isWithinInterval } from "date-fns";
 
 export default function EmployeeDashboard() {
   const { data, isLoading } = useQuery<EmployeeDashboardData>({
@@ -19,6 +21,24 @@ export default function EmployeeDashboard() {
   });
   const [isExporting, setIsExporting] = useState(false);
   const { toast } = useToast();
+  
+  const defaultDateRange: DateRange = {
+    from: new Date(new Date().setDate(new Date().getDate() - 90)),
+    to: new Date(),
+  };
+  const [dateRange, setDateRange] = useState<DateRange>(defaultDateRange);
+  
+  const filteredWeeklyTrends = useMemo(() => {
+    if (!data?.weeklyTrends) return [];
+    
+    const filtered = data.weeklyTrends.filter((trend) => {
+      const trendDate = parseISO(trend.week);
+      return isWithinInterval(trendDate, { start: dateRange.from, end: dateRange.to });
+    });
+    
+    // Fallback to full dataset if filter eliminates all data points
+    return filtered.length > 0 ? filtered : data.weeklyTrends;
+  }, [data?.weeklyTrends, dateRange]);
 
   const handleExportPDF = async () => {
     try {
@@ -230,13 +250,21 @@ export default function EmployeeDashboard() {
 
       <Card data-testid="card-weekly-trend">
         <CardHeader>
-          <CardTitle>12-Week Performance Trend</CardTitle>
-          <CardDescription>Track your metrics over time</CardDescription>
+          <div className="flex items-center justify-between gap-4 flex-wrap">
+            <div>
+              <CardTitle>Performance Trend</CardTitle>
+              <CardDescription>Track your metrics over time</CardDescription>
+            </div>
+            <DateRangePicker
+              dateRange={dateRange}
+              onDateRangeChange={setDateRange}
+            />
+          </div>
         </CardHeader>
         <CardContent>
           <div className="h-80">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={data.weeklyTrends}>
+              <LineChart data={filteredWeeklyTrends}>
                 <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                 <XAxis 
                   dataKey="week" 

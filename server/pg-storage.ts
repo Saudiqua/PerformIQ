@@ -15,6 +15,7 @@ function toUser(dbUser: any): User {
     teamId: dbUser.teamId,
     managerId: dbUser.managerId || null,
     avatarUrl: dbUser.avatarUrl,
+    theme: dbUser.theme || "light",
   };
 }
 
@@ -80,6 +81,12 @@ export class PostgresStorage implements IStorage {
   async getAllUsers() {
     const results = await db.select().from(users);
     return results.map(toUser);
+  }
+
+  async updateUserTheme(userId: string, theme: "light" | "dark") {
+    await db.update(users)
+      .set({ theme })
+      .where(eq(users.id, userId));
   }
 
   // Team operations

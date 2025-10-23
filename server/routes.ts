@@ -68,6 +68,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         teamId: randomTeam.id,
         managerId: null,
         avatarUrl: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random&size=128`,
+        theme: "light",
       });
 
       const token = generateToken(user);
@@ -79,6 +80,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(response);
     } catch (error) {
       res.status(400).json({ message: "Invalid request" });
+    }
+  });
+
+  // User preferences
+  app.patch("/api/user/theme", authMiddleware, async (req: AuthRequest, res) => {
+    try {
+      const userId = req.user!.id;
+      const { theme } = req.body;
+
+      if (theme !== "light" && theme !== "dark") {
+        return res.status(400).json({ message: "Invalid theme value" });
+      }
+
+      await storage.updateUserTheme(userId, theme);
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update theme" });
     }
   });
 

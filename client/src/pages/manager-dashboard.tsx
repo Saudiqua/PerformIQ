@@ -9,8 +9,10 @@ import { TrendingUp, TrendingDown, Minus, AlertCircle, Clock, Smile, Activity, E
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from "recharts";
 import { Link } from "wouter";
 import { exportElementToPDF } from "@/lib/pdf-export";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { DateRangePicker, DateRange } from "@/components/date-range-picker";
+import { parseISO, isWithinInterval } from "date-fns";
 
 export default function ManagerDashboard() {
   const { data, isLoading } = useQuery<ManagerDashboardData>({
@@ -18,6 +20,24 @@ export default function ManagerDashboard() {
   });
   const [isExporting, setIsExporting] = useState(false);
   const { toast } = useToast();
+  
+  const defaultDateRange: DateRange = {
+    from: new Date(new Date().setDate(new Date().getDate() - 90)),
+    to: new Date(),
+  };
+  const [dateRange, setDateRange] = useState<DateRange>(defaultDateRange);
+  
+  const filteredSentimentTrend = useMemo(() => {
+    if (!data?.teamAnalytics?.sentimentTrend) return [];
+    
+    const filtered = data.teamAnalytics.sentimentTrend.filter((item) => {
+      const itemDate = parseISO(item.date);
+      return isWithinInterval(itemDate, { start: dateRange.from, end: dateRange.to });
+    });
+    
+    // Fallback to full dataset if filter eliminates all data points
+    return filtered.length > 0 ? filtered : data.teamAnalytics.sentimentTrend;
+  }, [data?.teamAnalytics?.sentimentTrend, dateRange]);
 
   const handleExportPDF = async () => {
     try {
@@ -201,13 +221,21 @@ export default function ManagerDashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Card data-testid="card-sentiment-trend">
             <CardHeader>
-              <CardTitle>Team Sentiment Trend</CardTitle>
-              <CardDescription>Average sentiment over time</CardDescription>
+              <div className="flex items-center justify-between gap-4 flex-wrap">
+                <div>
+                  <CardTitle>Team Sentiment Trend</CardTitle>
+                  <CardDescription>Average sentiment over time</CardDescription>
+                </div>
+                <DateRangePicker
+                  dateRange={dateRange}
+                  onDateRangeChange={setDateRange}
+                />
+              </div>
             </CardHeader>
             <CardContent>
               <div className="h-64">
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={data.teamAnalytics.sentimentTrend}>
+                  <LineChart data={filteredSentimentTrend}>
                     <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                     <XAxis 
                       dataKey="date" 
