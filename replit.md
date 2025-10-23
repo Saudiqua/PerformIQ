@@ -4,12 +4,12 @@
 PerformIQ is a comprehensive performance management platform that uses AI to analyze employee communication patterns, generate insights, and provide actionable recommendations for both employees and managers.
 
 ## Current State
-- **Status**: ✅ MVP Complete, Tested, and Demo-Ready
-- **Environment**: Development with simulated data
+- **Status**: ✅ MVP Complete with PostgreSQL + PDF Export
+- **Environment**: Development with PostgreSQL database
 - **Server**: Running on port 5000
-- **Database**: In-memory storage with seeded realistic data
-- **Testing**: End-to-end test suite passed for all user roles
-- **Quality**: Architect-reviewed and approved
+- **Database**: PostgreSQL with Drizzle ORM - 20 users, 1200+ communications, 192 metrics, 5 alerts
+- **Testing**: End-to-end test suite passed for PostgreSQL migration and PDF export
+- **Quality**: Database migration tested and verified
 
 ## Technology Stack
 
@@ -23,9 +23,10 @@ PerformIQ is a comprehensive performance management platform that uses AI to ana
 
 ### Backend
 - Express.js server
-- In-memory storage (MemStorage)
+- PostgreSQL database with Drizzle ORM
 - OpenAI API integration (via Replit AI Integrations)
 - JWT authentication with bcrypt password hashing
+- Idempotent data seeding with realistic performance patterns
 
 ### AI Integration
 - OpenAI GPT-5 model via Replit AI Integrations
@@ -66,17 +67,21 @@ All demo accounts use password: `demo123`
 - **Manager**: manager@demo.com
 - **Admin**: admin@demo.com
 
-## Mock Data Generation
-The application generates realistic simulated data on startup:
-- **24 users** across 3 teams (Engineering, Marketing, Sales)
-- **1200+ communications** over 3 months with varying sentiment
+## Database Data Generation
+The application seeds realistic data into PostgreSQL on first startup:
+- **20 users** across 3 teams (Engineering, Marketing, Sales)
+  - 3 managers (one per team)
+  - 1 admin
+  - 16 employees with varying performance patterns
+- **1200+ communications** over 3 months with varying sentiment (email and Slack)
+- **192 metrics** (12 weeks of data per employee)
 - **Performance patterns** including:
-  - 3 high performers (base score 85)
-  - 3 struggling employees (base score 45)
-  - 1 employee with recent performance drop
-  - 1 employee showing burnout signals
-  - 12 average performers (base score 68)
-- **Automated alerts** for low engagement, performance drops, and burnout signals
+  - High performers (base score 85)
+  - Struggling employees (base score 45)
+  - Employees with recent performance drop
+  - Employees showing burnout signals
+  - Average performers (base score 68)
+- **Automated alerts** for low engagement, performance drops, and burnout signals (5 total)
 
 ## User Roles & Dashboards
 
@@ -125,7 +130,23 @@ The application follows comprehensive design guidelines defined in `design_guide
 - **Data Visualization**: Clean Recharts implementation with proper tooltips and legends
 
 ## Recent Changes
-*Last updated: October 22, 2025*
+*Last updated: October 23, 2025*
+
+### Latest Updates - PostgreSQL Migration & PDF Export
+- ✅ **PostgreSQL Migration Complete** (October 23, 2025)
+  - Migrated from in-memory storage to PostgreSQL with Drizzle ORM
+  - Created complete database schema with proper relationships and constraints
+  - Implemented PostgresStorage class with full CRUD operations
+  - Built idempotent data seeding system
+  - All 6 tables created and seeded: users, teams, communications, metrics, alerts, thresholds
+  - End-to-end tests passed confirming database integration works correctly
+
+- ✅ **PDF Export Functionality** (October 23, 2025)
+  - Implemented PDF export using jspdf and html2canvas libraries
+  - Added "Export PDF" buttons to Employee Dashboard, Manager Dashboard, and Employee Deep Dive
+  - Created reusable PDF export utility with toast notifications
+  - Each dashboard wraps content in ID'd div for clean PDF capture
+  - End-to-end tests passed confirming PDF exports work on all dashboards
 
 ### Completed MVP Features
 - ✅ Complete authentication system with JWT tokens and bcrypt password hashing
@@ -135,7 +156,6 @@ The application follows comprehensive design guidelines defined in `design_guide
 - ✅ Employee Deep Dive view with detailed metrics, AI summaries, and 1:1 talking points
 - ✅ Admin Dashboard with user management, system analytics, and configurable alert thresholds
 - ✅ OpenAI GPT-5 integration for sentiment analysis and AI-generated insights
-- ✅ Comprehensive data seeding with 24 users, 3 teams, 1200+ communications
 - ✅ Full end-to-end test coverage for all user flows
 - ✅ Fixed login race condition for reliable authentication flow
 - ✅ Implemented proper admin API structure with separate endpoints
@@ -166,26 +186,39 @@ The application uses Replit AI Integrations which provides:
 - Environment variables automatically configured
 
 ### Key Files
-- `shared/schema.ts` - TypeScript interfaces and Zod schemas
-- `server/storage.ts` - In-memory storage implementation
-- `server/seed-data.ts` - Mock data generation
+- `shared/schema.ts` - TypeScript interfaces, Zod schemas, and Drizzle table definitions
+- `server/db.ts` - PostgreSQL connection with Drizzle
+- `server/pg-storage.ts` - PostgreSQL storage implementation with Drizzle ORM
+- `server/seed-data.ts` - Idempotent database seeding with realistic patterns
 - `server/openai-service.ts` - AI integration functions
 - `server/auth.ts` - JWT authentication middleware
 - `server/routes.ts` - All API endpoints
 - `client/src/App.tsx` - Routing and layout
 - `client/src/lib/queryClient.ts` - React Query configuration with auth
-- `client/src/pages/*` - All dashboard pages
+- `client/src/lib/pdf-export.ts` - PDF export utility
+- `client/src/pages/*` - All dashboard pages with PDF export
 
 ## Testing Status
-End-to-end test suite executed successfully on October 22, 2025:
+End-to-end test suite executed successfully on October 23, 2025:
 - ✅ Employee authentication and dashboard navigation
 - ✅ Manager authentication, dashboard, and deep dive navigation
 - ✅ Admin authentication and all admin features
-- ✅ Performance metrics display correctly
+- ✅ Performance metrics display correctly from PostgreSQL
 - ✅ AI insights generation working
 - ✅ Charts and visualizations rendering properly
 - ✅ Alert threshold configuration with persistence
 - ✅ All API endpoints returning 200 status codes
+- ✅ **PostgreSQL Migration Verified:**
+  - 16 employees seeded in database
+  - 192 metrics (12 weeks × 16 employees)
+  - 1200 communications
+  - 5 alerts
+  - All data properly retrieved and displayed
+- ✅ **PDF Export Verified:**
+  - Employee Dashboard PDF export successful
+  - Manager Dashboard PDF export successful
+  - Employee Deep Dive PDF export successful
+  - Toast notifications working correctly
 
 ## User Preferences
 - Focus on visual excellence and professional design quality
@@ -193,16 +226,16 @@ End-to-end test suite executed successfully on October 22, 2025:
 - Inter font for UI text, JetBrains Mono for numerical data
 
 ## Known Limitations
-- Data is in-memory only (resets on server restart)
-- Simulated data patterns (not real integrations)
-- No email notifications
-- No export to PDF (in future phase)
-- No dark mode toggle (styled for both modes but no toggle UI)
+- Simulated data patterns (not real email/Slack integrations)
+- No real-time WebSocket notifications yet
+- No date range filtering for analytics yet
+- No dark mode toggle UI yet (styled for both modes but no toggle button)
+- Minor CORS warnings for external avatar images (cosmetic only)
 
 ## Future Enhancements
-- Replace in-memory storage with PostgreSQL
-- Export reports to PDF
-- Real-time notification system
+- Real-time WebSocket notification system
 - Advanced filtering and date range selectors
-- Dark mode toggle in UI
+- Dark mode toggle button in UI
 - Real integration with email/Slack APIs
+- Email notifications for alerts
+- Performance report scheduling and delivery
