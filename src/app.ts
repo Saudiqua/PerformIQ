@@ -1,4 +1,4 @@
-import express, { Request, Response } from 'express';
+import express from 'express';
 import healthRouter from './routes/health.js';
 import integrationsRouter from './routes/integrations.js';
 import oauthRouter from './routes/oauth.js';
@@ -17,20 +17,6 @@ app.use(express.json());
 app.use((req, _res, next) => {
   logger.info({ method: req.method, url: req.url }, 'Incoming request');
   next();
-});
-
-app.get('/', (_req: Request, res: Response) => {
-  res.json({
-    name: 'PerformIQ API',
-    version: '1.0.0',
-    status: 'running',
-    endpoints: {
-      health: 'GET /health',
-      integrations: 'GET /api/integrations',
-      events: 'GET /api/events',
-      admin: 'POST /api/admin/jobs/run',
-    },
-  });
 });
 
 app.use('/health', healthRouter);
