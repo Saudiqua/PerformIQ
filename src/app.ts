@@ -1,7 +1,14 @@
-import express from 'express';
+import express, { Request, Response } from 'express';
 import healthRouter from './routes/health.js';
+import integrationsRouter from './routes/integrations.js';
+import oauthRouter from './routes/oauth.js';
+import eventsRouter from './routes/events.js';
+import adminRouter from './routes/admin.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { logger } from './config/logger.js';
+import { authMiddleware } from './middleware/auth.js';
+import { orgMiddleware } from './middleware/org.js';
+import { rateLimitMiddleware } from './middleware/rateLimit.js';
 
 export const app = express();
 
@@ -12,6 +19,27 @@ app.use((req, _res, next) => {
   next();
 });
 
+app.get('/', (_req: Request, res: Response) => {
+  res.json({
+    name: 'PerformIQ API',
+    version: '1.0.0',
+    status: 'running',
+    endpoints: {
+      health: 'GET /health',
+      integrations: 'GET /api/integrations',
+      events: 'GET /api/events',
+      admin: 'POST /api/admin/jobs/run',
+    },
+  });
+});
+
 app.use('/health', healthRouter);
+
+app.use('/oauth', rateLimitMiddleware, oauthRouter);
+
+app.use('/api', rateLimitMiddleware);
+app.use('/api/integrations', authMiddleware, orgMiddleware, integrationsRouter);
+app.use('/api/events', authMiddleware, orgMiddleware, eventsRouter);
+app.use('/api/admin', authMiddleware, orgMiddleware, adminRouter);
 
 app.use(errorHandler);
