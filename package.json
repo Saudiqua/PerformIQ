@@ -1,6 +1,7 @@
 {
   "name": "workspace",
   "version": "1.0.0",
+  "type": "module",
   "main": "index.js",
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
@@ -350,7 +351,9 @@
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "tsx watch src/index.ts"
+    "dev": "node dev.js",
+    "build": "tsc && cd client && npx vite build",
+    "start": "NODE_ENV=production node dist/index.js"
   },
   "keywords": [],
   "author": "",

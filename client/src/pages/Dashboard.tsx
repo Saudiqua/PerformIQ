@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useTheme } from "@/components/theme-provider";
+import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import {
@@ -19,6 +20,7 @@ import {
   Video,
   Users,
   Calendar,
+  LogOut,
 } from "lucide-react";
 import { SiSlack, SiGmail, SiZoom } from "react-icons/si";
 
@@ -92,6 +94,7 @@ const allProviders = ["slack", "gmail", "outlook", "teams", "zoom"];
 
 export default function Dashboard() {
   const { theme, setTheme } = useTheme();
+  const { user, signOut } = useAuth();
   const queryClient = useQueryClient();
 
   const { data: integrationsData, isLoading: integrationsLoading } = useQuery<IntegrationsResponse>({
@@ -121,6 +124,60 @@ export default function Dashboard() {
     },
     onError: (err: Error) => {
       toast({ title: "Sync failed", description: err.message, variant: "destructive" });
+    },
+  });
+
+  const connectMutation = useMutation({
+    mutationFn: async (provider: string) => {
+      const res = await apiRequest("POST", `/api/integrations/${provider}/connect`);
+      return res.json();
+    },
+    onSuccess: (data: { url: string }, provider: string) => {
+      const width = 600;
+      const height = 700;
+      const left = window.screen.width / 2 - width / 2;
+      const top = window.screen.height / 2 - height / 2;
+
+      const popup = window.open(
+        data.url,
+        "oauth",
+        `width=${width},height=${height},left=${left},top=${top}`
+      );
+
+      const handleMessage = (event: MessageEvent) => {
+        if (event.data?.type === "oauth_complete" && event.data?.provider === provider) {
+          window.removeEventListener("message", handleMessage);
+          if (popup && !popup.closed) popup.close();
+          queryClient.invalidateQueries({ queryKey: ["/api/integrations"] });
+          toast({ title: "Integration connected", description: `${provider} has been connected successfully.` });
+        }
+      };
+
+      window.addEventListener("message", handleMessage);
+
+      const checkClosed = setInterval(() => {
+        if (popup?.closed) {
+          clearInterval(checkClosed);
+          window.removeEventListener("message", handleMessage);
+        }
+      }, 1000);
+    },
+    onError: (err: Error) => {
+      toast({ title: "Connection failed", description: err.message, variant: "destructive" });
+    },
+  });
+
+  const disconnectMutation = useMutation({
+    mutationFn: async (provider: string) => {
+      const res = await apiRequest("POST", `/api/integrations/${provider}/disconnect`);
+      return res.json();
+    },
+    onSuccess: (_data, provider: string) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/integrations"] });
+      toast({ title: "Integration disconnected", description: `${provider} has been disconnected.` });
+    },
+    onError: (err: Error) => {
+      toast({ title: "Disconnection failed", description: err.message, variant: "destructive" });
     },
   });
 
@@ -175,6 +232,7 @@ export default function Dashboard() {
             <h1 className="text-xl font-semibold">PerformIQ</h1>
           </div>
           <div className="flex items-center gap-2">
+            <div className="text-sm text-muted-foreground mr-2">{user?.email}</div>
             <Button
               variant="ghost"
               size="icon"
@@ -182,6 +240,14 @@ export default function Dashboard() {
               data-testid="button-theme-toggle"
             >
               {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={signOut}
+              title="Sign out"
+            >
+              <LogOut className="h-5 w-5" />
             </Button>
           </div>
         </div>
@@ -311,7 +377,7 @@ export default function Dashboard() {
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-xs text-muted-foreground space-y-1">
+                    <div className="text-xs text-muted-foreground space-y-2">
                       {syncState ? (
                         <>
                           <div className="flex items-center gap-1">
@@ -330,6 +396,28 @@ export default function Dashboard() {
                           <Clock className="h-3 w-3" />
                           Never synced
                         </div>
+                      )}
+                    </div>
+                    <div className="mt-4">
+                      {status === "connected" ? (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="w-full"
+                          onClick={() => disconnectMutation.mutate(provider)}
+                          disabled={disconnectMutation.isPending || !oauthEnabled}
+                        >
+                          Disconnect
+                        </Button>
+                      ) : (
+                        <Button
+                          size="sm"
+                          className="w-full"
+                          onClick={() => connectMutation.mutate(provider)}
+                          disabled={connectMutation.isPending || !oauthEnabled}
+                        >
+                          Connect
+                        </Button>
                       )}
                     </div>
                   </CardContent>
