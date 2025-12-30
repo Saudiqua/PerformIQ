@@ -6,6 +6,7 @@ import { useTheme } from "@/components/theme-provider";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { DevDiagnostics } from "@/components/DevDiagnostics";
 import {
   RefreshCw,
   Sun,
@@ -254,6 +255,8 @@ export default function Dashboard() {
       </header>
 
       <main className="container px-6 py-8">
+        <DevDiagnostics />
+
         {apiError && (
           <Card className="mb-6 border-yellow-500 bg-yellow-50 dark:bg-yellow-950/20">
             <CardContent className="pt-6">
@@ -264,7 +267,7 @@ export default function Dashboard() {
                     API Authentication Required
                   </p>
                   <p className="text-sm text-yellow-700 dark:text-yellow-300">
-                    This dashboard requires JWT authentication. Configure Supabase and set up authentication to access the API.
+                    Backend authentication not configured. See GET_SERVICE_ROLE_KEY.md for setup instructions.
                   </p>
                 </div>
               </div>
